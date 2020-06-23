@@ -1,63 +1,70 @@
-#%global debug_package %{nil}
+Name:           colm
+Version:        0.13.0.7
+Release:        1
+Summary:        Programming language designed for the analysis of computer languages
 
-Name:    colm
-Version: 0.14.1
-Release: 1
-Summary: Colm is a programming language designed for the analysis and transformation of computer languages
-License: MIT and LGPLv2+
-URL:	 http://www.colm.net/open-source/%{name}
-Source0: https://www.colm.net/files/colm/%{name}-%{version}.tar.gz
+# aapl/ and some headers from src/ are the LGPLv2+
+License:        MIT and LGPLv2+
+URL:            https://www.colm.net/open-source/colm/
+Source0:        https://www.colm.net/files/%{name}/%{name}-%{version}.tar.gz
 
-BuildRequires: 	gcc autoconf automake asciidoc make 
+BuildRequires:  gcc
+BuildRequires:  gcc-c++
+BuildRequires:  autoconf
+BuildRequires:  automake
+BuildRequires:  libtool
+BuildRequires:  make
+BuildRequires:  asciidoc
+
+# Unfortunately, upstream doesn't exist and not possible to find version
+Provides:       bundled(aapl)
 
 %description
-Colm is a programming language designed for the analysis and transformation of computer languages. Colm is influenced primarily by TXL. It is in the family of program transformation languages.
+Colm is a programming language designed for the analysis and transformation
+of computer languages. Colm is influenced primarily by TXL. It is
+in the family of program transformation languages.
 
 %package devel
-Summary: devel package for colm
-Requires: %{name} = %{version}-%{release}
-%description devel
-Colm is a programming language designed for the analysis and transformation of computer languages. Colm is influenced primarily by TXL. It is in the family of program transformation languages.
+Summary:        Development libraries and header files for %{name}
+Requires:       %{name}%{?_isa} = %{?epoch:%{epoch}:}%{version}-%{release}
 
+%description devel
+%{summary}.
 
 %prep
-%setup -q -n %{name}-%{version}/
+%autosetup
+# Do not pollute with docs
+sed -i -e "/dist_doc_DATA/d" Makefile.am
 
 %build
-%configure
+autoreconf -vfi
+%configure --disable-static
 %make_build
 
 %install
 %make_install
-rm -rf %{buildroot}/%{_libdir}/*.la
-rm -rf %{buildroot}/%{_libdir}/*.a
-install -d %{buildroot}/usr/share/%{name}
-mv %{buildroot}/usr/share/*.lm %{buildroot}/usr/share/%{name}
-mv %{buildroot}/usr/share/runtests %{buildroot}/usr/share/%{name}
+find %{buildroot}%{_libdir} -type f -name '*.la' -print -delete
+install -p -m 0644 -D %{name}.vim %{buildroot}%{_datadir}/vim/vimfiles/syntax/%{name}.vim
 
-%pre
-%preun
-%post
-%postun
-
-%check
+%ldconfig_scriptlets
 
 %files
-%license COPYING 
-%doc README 
-%{_bindir}/*
-%{_libdir}/libcolm-%{version}.so
-%{_libdir}/libfsm.so.*
-
+%license COPYING
+%doc ChangeLog README
+%{_bindir}/%{name}
+%{_libdir}/lib%{name}-%{version}.so
+%dir %{_datadir}/vim
+%dir %{_datadir}/vim/vimfiles
+%dir %{_datadir}/vim/vimfiles/syntax
+%{_datadir}/vim/vimfiles/syntax/%{name}.vim
 
 %files devel
-%{_includedir}/*
-%{_libdir}/libcolm.so
-%{_libdir}/libfsm.so
+%{_libdir}/lib%{name}.so
+%{_includedir}/%{name}/
 %{_docdir}/%{name}/*
-/usr/share/%{name}/*
 
 %changelog
+* Tue Jun 23 2020 Yikun Jiang <yikunkero@gmail.com>
+- bump version to 0.13.0.7
 * Sun Mar 29 2020 Wei Xiong <myeuler@163.com>
 - Package init
-
